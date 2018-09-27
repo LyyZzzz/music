@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>webmusic</title>
+    <link rel="stylesheet" type="text/css" href="./css/webmusic.css" />
+    <style type="text/css">
+
+    </style>
+</head>
+
+<body>
+    <div class="panelContent">
+        <div class="content">
+            <div class="posterContent fl">
+                <div class="poster">
+                    <img class="posterImg">
+                </div>
+            </div>
+            <div class="lrcContent fl">
+                <div class="lrcName">歌曲名</div>
+                <div class="lrcDetail">
+                    <p class="albumName">
+                        <span class="fontColor">专辑：</span>
+                        <span class="blank albumContent">专辑名</span>
+                    </p>
+                    <p class="singerName">
+                        <span class="fontColor">歌手：</span>
+                        <span class="blank singerContent">歌手名</span>
+                    </p>
+                </div>
+                <div class="lrc" id="m-con">
+
+                </div>
+            </div>
+        </div>
+
+        <div id="bg"></div>
+
+        <div class="musicControl">
+            <div class="controlBg"></div>
+            <div class="playerControl">
+                <div class="controlLeft">
+                    <span class="icon playLast"></span>
+                    <span class="playOrPauseContent"><span class="icon playOrPause"></span></span>
+                    <span class="icon playNext"></span>
+                </div>
+                <div class="controlPoster">
+                    <img src="" alt="海报" class="controlPosterImg">
+                </div>
+                <div class="controlCenter">
+                    <div class="songMsg">
+                        <span class="songMsgLeft">AAAAA</span>
+                        <span><span class="getCurrentTime"></span> / <span class="getduration"></span></span>
+                    </div>
+                    <div class="controlCenterBottom">
+                        <div class="progressBar"></div>
+                    </div>
+                </div>
+                <div class="controlRight">
+                    <span class="icon volume"></span>
+                    <span class="icon playbackSequence"></span>
+                    <span class="icon downloadThis"></span>
+                    <span class="icon share"></span>
+                </div>
+                <div class="controlList">
+                    <div class="icon listIcon">
+                        <span class="listNum">22</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 控制器 -->
+        <div style="position: absolute;top: 0;left: 0; display: inline-flex;">
+            <div class="control"></div>
+            <select id="selectData"></select>
+        </div>
+    </div>
+
+
+    <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+    <script>
+        $(function() {
+            var thisNum = 0;
+            data = [{
+                song_name: '讲真的',
+                hash: 'C43866106BA5CB8D11DD23E44F23C5B5',
+                album_id: 547165,
+                _: 1531622317633,
+            }, {
+                song_name: 'That Girl',
+                hash: '723715E13ECCC9AB7AFC154BA7E1CC3B',
+                album_id: 1820815,
+                _: 1531622317616,
+            }, {
+                song_name: '这一场恋爱',
+                hash: 'B1F8453E35605DDA8F7690E7D8238B56',
+                album_id: 5090135,
+                _: 1531361802065
+            }, {
+                song_name: '童话镇',
+                hash: 'ED35367BD830D24073CCE802C075C6AD',
+                album_id: 1918064,
+                _: 1531361802276,
+            }, {
+                song_name: '学猫叫',
+                hash: '3B624E3FA7D00DB2ADD082598CE8A981',
+                album_id: 8496641,
+                _: 1531622317640
+            }, {
+                song_name: '浪人琵琶',
+                hash: 'CF995E326627B042250C2E1B6C6809D7',
+                album_id: 8631706,
+                _: 1531622317668
+            }];
+            getData(0);
+
+            var options = '';
+            for (var i = 0; i < data.length; i++) {
+                options += "<option value=" + i + ">" + data[i].song_name + "</option>"
+            }
+            $("#selectData").html(options);
+            $("#selectData").change(function() {
+                // console.log($("#selectData").val());
+                // console.log(typeof($("#selectData").val()));
+                getData(parseInt($("#selectData").val()));
+            })
+            var audioDom;
+
+            function getData(index) {
+                thisNum = index;
+                audioDom = document.createElement("audio"); //创建MP3播放器
+                audioDom.controls = "controls";
+                $('.control').html(''); //清除控制器
+                audioDom.id = "audioDom"
+                audioDom.src = ''; //清除歌曲链接
+                $('.control').append(audioDom);
+
+                $.ajax({
+                    type: "GET",
+                    url: "http://www.kugou.com/yy/index.php?r=play/getdata&hash=" + data[index].hash + "&album_id=" + data[index].album_id + "&_=" + new Date().valueOf(),
+                    success: function(res) {
+                        // audio_name歌曲名    album_name专辑名    song_name歌曲名    author_name作者姓名    img海报    lyrics歌词    play_url播放地址
+                        // console.log(JSON.parse(res).data);
+                        var data = JSON.parse(res).data;
+                        var lrc = data.lyrics;
+                        $(".poster").css('background-image', "url(" + data.img + ")");
+                        $("#bg").css('background-image', "url(" + data.img + ")");
+                        $(".controlPosterImg").attr("src", data.img)
+                        $(".albumContent").html(data.album_name);
+                        $(".singerContent").html(data.author_name);
+                        $(".lrcName").html(data.audio_name);
+                        $(".songMsgLeft").html(data.audio_name);
+                        audioDom.src = data.play_url;
+                        var lrcArray = lrc.split("[");
+                        var html = "";
+                        for (var i = 0; i < lrcArray.length; i++) {
+                            var arr = lrcArray[i].split("]");
+                            var lrcMsg = arr[1];
+                            var timer = arr[0].split(".");
+                            var stime = timer[0].split(":");
+                            var ms = stime[0] * 60 + stime[1] * 1;
+
+                            if (lrcMsg) {
+                                html += "<div class='eachLrc' id='" + ms + "'>" + lrcMsg + "</div>";
+                            }
+                        }
+                        $("#m-con").html(html);
+                    }
+                });
+
+                /**
+                 *获取歌曲长度
+                 */
+                setTimeout(function() {
+                    $(".getduration").html(formatSeconds(audioDom.duration.toFixed(0)))
+                }, 500);
+
+
+                var history = 0;
+                num = 0;
+                audioDom.addEventListener("timeupdate", function() {
+                    var time = this.currentTime;
+                    $(".getCurrentTime").html(formatSeconds(this.currentTime.toFixed(0)))
+                        //通过时间来驱动歌词
+                    var s = parseInt(time);
+                    for (var i = 0; i < s; i++) {
+                        $("#" + i).addClass("selfTurn").siblings().removeClass("selfTurn");
+                    }
+                    // console.log($("#"+i));
+                    // console.log(history + "   " + s);
+                    if ($("#" + i).length == 1 && history != s) {
+                        document.getElementById(i).scrollIntoView({
+                            block: "center",
+                            behavior: "smooth"
+                        }, false);
+                        history = s;
+                    }
+                });
+                audioDom.addEventListener("pause", function() {
+                    console.log("暂停");
+                    // console.log(audioDom.duration.toFixed(2));  //获取当前音频的长度
+                })
+
+                audioDom.addEventListener("play", function() {
+                    console.log("播放");
+                });
+
+                //点击按钮
+                $(".playOrPause").click(function() {
+                    console.log(audioDom.duration);
+                    if (audioDom.paused) {
+                        audioDom.play();
+                    } else {
+                        audioDom.pause();
+                    }
+                });
+
+
+            }
+
+            var music_resize = function() {
+                $(".panelContent").css("height", $(window).height());
+            };
+            music_resize();
+            $(window).resize(function() {
+                music_resize();
+            });
+
+            /**
+             * 定时任务切歌
+             */
+            var timer = function() {
+                setTimeout(function() {
+                    getData(thisNum);
+                }, 500);
+                setTimeout(function() {
+                    audioDom.play();
+                }, 1000);
+            }
+
+            /**
+             * 下一首
+             */
+            $(".playNext").click(function() {
+                if (thisNum < data.length - 1) {
+                    thisNum++;
+                }
+                timer();
+                console.log(thisNum);
+            });
+
+            /**
+             * 上一首
+             */
+            $(".playLast").click(function() {
+                if (thisNum > 0) {
+                    thisNum--;
+                }
+                timer();
+                console.log(thisNum);
+            })
+
+            function formatSeconds(value) {
+                var theTime = parseInt(value); // 秒
+                var theTime1 = 0; // 分
+                if (theTime > 60) {
+                    theTime1 = parseInt(theTime / 60);
+                    theTime = parseInt(theTime % 60);
+                }
+                var result = "" + parseInt(theTime);
+                if (result < 10) {
+                    result = "0" + result;
+                }
+                if (theTime1 < 10) {
+                    result = "0" + parseInt(theTime1) + ":" + result;
+                } else {
+                    result = "" + parseInt(theTime1) + ":" + result;
+                }
+
+                return result;
+            }
+        });
+    </script>
+</body>
+
+<!-- <p>图片api等素材均取自酷狗音乐</p> -->
+
+</html>
